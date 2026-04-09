@@ -1,16 +1,12 @@
-# This is a sample Python script.
+import argparse
+import uvicorn
+from backend.app import create_app
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+app = create_app()
 
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="LLM 训练数据查看器")
+    parser.add_argument("--port", type=int, default=8000, help="服务端口")
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="监听地址")
+    args = parser.parse_args()
+    uvicorn.run(app, host=args.host, port=args.port)
