@@ -1,93 +1,93 @@
-# LLM Training Data Viewer - Design Spec
+# LLM 训练数据查看器 - 设计文档
 
-## Overview
+## 概述
 
-A local-deployment web tool for browsing, viewing, searching, and editing LLM training data in JSON/JSONL format. Designed for ML engineers who work with diverse training datasets (SFT, RL/preference, instruction-tuning, etc.).
+一个本地部署的 Web 工具，用于浏览、查看、搜索和编辑 JSON/JSONL 格式的 LLM 训练数据。面向日常处理多种训练数据集（SFT、RL/偏好、指令微调等）的大模型从业者。
 
-## Core User Flow
+## 核心用户流程
 
-1. User starts the server: `python main.py --port 8000`
-2. Opens browser, enters a local folder path
-3. Left panel shows file tree of all .json/.jsonl files under that folder
-4. Click a file → right panel shows data table (default first 10 rows, with "Load All" option)
-5. Click a row → right drawer panel opens with smart-rendered detail view
-6. User can search, filter, edit, save, or export data
+1. 启动服务：`python main.py --port 8000`
+2. 打开浏览器，输入本地文件夹路径
+3. 左侧面板显示该文件夹下所有 .json/.jsonl 文件的层级目录树
+4. 点击某个文件 → 右侧显示数据表格（默认加载前 10 条，可点击"加载全部"）
+5. 点击某行 → 右侧弹出抽屉面板，智能渲染详情
+6. 可搜索、筛选、编辑、保存或导出数据
 
-## Tech Stack
+## 技术栈
 
-- **Backend**: Python FastAPI
-- **Frontend**: Vue 3 + Vite + Element Plus
-- **Data rendering**: vue-json-pretty (JSON tree), Monaco Editor or textarea (editing)
-- **Deployment**: FastAPI serves built static files in production; Vite dev server + proxy in development. Single port, no extra dependencies.
+- **后端**：Python FastAPI
+- **前端**：Vue 3 + Vite + Element Plus
+- **数据渲染**：vue-json-pretty（JSON 树形展示）、Monaco Editor 或 textarea（编辑）
+- **部署**：生产环境 FastAPI 直接 serve 构建后的静态文件；开发环境 Vite dev server + proxy。单端口，无额外依赖。
 
-## Architecture
+## 架构
 
 ```
 ┌──────────────────────────────────────────────┐
-│              Vue 3 Frontend (SPA)            │
+│             Vue 3 前端 (SPA)                 │
 │  Element Plus + vue-json-pretty              │
-│  Vite build, dev server + proxy              │
+│  Vite 构建，开发时 dev server + proxy         │
 └──────────────┬───────────────────────────────┘
                │ HTTP REST API
 ┌──────────────▼───────────────────────────────┐
-│           FastAPI Backend                     │
-│  - Directory scan & file tree                │
-│  - Line-based file reading & pagination      │
-│  - Data editing & saving (overwrite/save-as) │
-│  - Search & filtering                        │
+│           FastAPI 后端                        │
+│  - 目录扫描 & 文件树构建                      │
+│  - 按行读取文件 & 分页                        │
+│  - 数据编辑 & 保存（覆盖/另存为）              │
+│  - 搜索 & 筛选                               │
 └──────────────┬───────────────────────────────┘
-               │ Direct file system read/write
-┌──────────────▼───────────────────────────────┘
-│          Local File System                    │
-│  User-specified directory of JSON/JSONL files │
+               │ 直接读写文件系统
+┌──────────────▼───────────────────────────────┐
+│          本地文件系统                          │
+│  用户指定的 JSON/JSONL 文件目录                │
 └──────────────────────────────────────────────┘
 ```
 
-No database. All data is read from and written to local files directly.
+无数据库，所有数据直接从本地文件读写。
 
-## Layout
+## 页面布局
 
-Classic two-panel layout:
+经典双栏布局：
 
-- **Left panel**: File tree (collapsible sidebar)
-- **Right panel**: Toolbar + Data table + Pagination
-- **Detail drawer**: Slides in from right when a row is clicked
+- **左侧面板**：文件目录树（可折叠）
+- **右侧主区域**：工具栏 + 数据表格 + 分页
+- **详情抽屉**：点击某行后从右侧滑出
 
-### Visual Style
+### 视觉风格
 
-White, minimal, premium feel:
+白色简约高级风格：
 
-- Main background: `#FFFFFF`, panels/cards: `#F7F8FA`
-- Accent color: low-saturation indigo/blue-gray
-- Text: `#333333` primary, `#999999` secondary
-- Generous whitespace, thin divider lines, no decorative elements
-- Conversation bubbles use soft pastel backgrounds per role (light blue, light green, light gray)
+- 主背景：`#FFFFFF`，面板/卡片：`#F7F8FA`
+- 强调色：低饱和度靛蓝/蓝灰
+- 文字：主色 `#333333`，次要 `#999999`
+- 大量留白，细线分割，无多余装饰
+- 对话气泡使用柔和浅色背景区分角色（浅蓝、浅绿、浅灰）
 
-## File Reading Strategy
+## 文件读取策略
 
-Both JSON and JSONL files follow the same convention: **one dict per line = one data entry**.
+JSON 和 JSONL 文件遵循相同约定：**每行一个字典 = 一条数据**。
 
-- **Default**: Read first 10 lines only (fast loading)
-- **Load All**: User can click "Load All" button to load the entire file
-- **Pagination**: offset/limit based on line numbers
-- **Line count caching**: First open scans total line count and caches it
-- File tree shows file name + row count + file size
+- **默认**：只读取前 10 行（快速加载）
+- **加载全部**：用户可点击"加载全部"按钮加载整个文件
+- **分页**：基于行号的 offset/limit
+- **行数缓存**：首次打开时扫描总行数并缓存
+- 文件树显示文件名 + 条数 + 文件大小
 
-## API Design
+## API 设计
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/scan` | POST | Input: folder path. Returns: file tree (recursive scan for .json/.jsonl) |
-| `/api/file/read` | POST | Input: file path + offset (default 0) + limit (default 10). Returns: data rows + total count + schema |
-| `/api/file/read-all` | POST | Input: file path. Returns: all data rows |
-| `/api/file/update` | POST | Input: file path + row index + new data. Overwrites that line in original file |
-| `/api/file/delete` | POST | Input: file path + row index. Removes that line from file |
-| `/api/file/save-as` | POST | Input: source file path + target file path. Saves current data to new file |
-| `/api/file/search` | POST | Input: file path + keyword + optional field name. Returns matching rows |
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/scan` | POST | 输入：文件夹路径。返回：文件树（递归扫描 .json/.jsonl） |
+| `/api/file/read` | POST | 输入：文件路径 + offset（默认 0）+ limit（默认 10）。返回：数据行 + 总条数 + schema |
+| `/api/file/read-all` | POST | 输入：文件路径。返回：全部数据行 |
+| `/api/file/update` | POST | 输入：文件路径 + 行索引 + 新数据。覆盖写回原文件对应行 |
+| `/api/file/delete` | POST | 输入：文件路径 + 行索引。从文件中删除该行 |
+| `/api/file/save-as` | POST | 输入：源文件路径 + 目标文件路径。将当前数据另存为新文件 |
+| `/api/file/search` | POST | 输入：文件路径 + 关键词 + 可选字段名。返回匹配的行 |
 
-## Smart Schema Detection
+## 智能 Schema 检测
 
-On file read, the backend analyzes the first 10 rows to produce a schema describing each field:
+读取文件时，后端分析前 10 条数据，生成描述每个字段的 schema：
 
 ```json
 {
@@ -101,78 +101,78 @@ On file read, the backend analyzes the first 10 rows to produce a schema describ
 }
 ```
 
-### Field Display Rules
+### 字段展示规则
 
-| Field Type | Table Display | Drawer Display |
-|-----------|---------------|----------------|
-| Simple value (string/number/bool) | Direct column | Plain text |
-| Short string (<100 chars) | Full text column | Plain text |
-| Long string (>=100 chars) | Truncated column | Full text / Markdown block |
-| Array with role/content objects | `[N items]` | **Conversation bubble cards** |
-| Object with chosen/rejected | `{...}` | **Preference comparison** (side-by-side) |
-| Object with instruction/input/output | `{...}` | **Instruction triplet** view |
-| Generic array | `[N items]` | Expanded list |
-| Generic object | `{N keys}` | JSON tree (vue-json-pretty) |
+| 字段类型 | 表格展示 | 抽屉展示 |
+|---------|---------|---------|
+| 简单值（string/number/bool） | 直接作为列 | 纯文本 |
+| 短字符串（<100 字符） | 完整显示列 | 纯文本 |
+| 长字符串（≥100 字符） | 截断显示 | 全文 / Markdown 块 |
+| 含 role/content 的对象数组 | `[N items]` | **对话气泡卡片** |
+| 含 chosen/rejected 的对象 | `{...}` | **偏好对比**（左右并排） |
+| 含 instruction/input/output 的对象 | `{...}` | **指令三段式**展示 |
+| 普通数组 | `[N items]` | 展开列表 |
+| 普通对象 | `{N keys}` | JSON 树（vue-json-pretty） |
 
-### Recognized Data Patterns
+### 识别的数据模式
 
-1. **Conversation** (`messages` array with `role`/`content` objects): Rendered as colored bubble cards
-   - system: light gray background
-   - user: light green background  
-   - assistant: light blue background
-2. **Preference/RL** (`chosen`/`rejected` fields): Side-by-side comparison panel
-3. **Instruction** (`instruction`/`input`/`output` fields): Three-section layout
-4. **Fallback**: JSON tree view (works for any structure)
+1. **对话模式**（`messages` 数组含 `role`/`content` 对象）：渲染为彩色气泡卡片
+   - system：浅灰背景
+   - user：浅绿背景
+   - assistant：浅蓝背景
+2. **偏好/RL 模式**（含 `chosen`/`rejected` 字段）：左右对比面板
+3. **指令模式**（含 `instruction`/`input`/`output` 字段）：三段式布局
+4. **兜底**：JSON 树形视图（适用于任何结构）
 
-### Drawer Tabs
+### 抽屉面板 Tab
 
-Tabs are dynamically composed based on detected patterns:
+根据检测到的数据模式动态组合 Tab：
 
-- **Smart View** (always present): Auto-rendered based on detected pattern (conversation bubbles, preference comparison, instruction triplet, or JSON tree)
-- **Raw JSON** (always present): Full JSON via vue-json-pretty, collapsible
-- **Edit** (always present): Code editor for direct JSON editing, with "Save" (overwrite) and "Save As" buttons
+- **智能视图**（始终存在）：根据检测到的模式自动渲染（对话气泡/偏好对比/指令三段/JSON 树）
+- **原始 JSON**（始终存在）：通过 vue-json-pretty 展示完整 JSON，可折叠
+- **编辑**（始终存在）：代码编辑器直接编辑 JSON，提供"保存"（覆盖）和"另存为"按钮
 
-## Frontend Component Structure
+## 前端组件结构
 
 ```
 App.vue
-├── PathInput              # Top bar: folder path input + scan button
-├── FileTree               # Left panel: el-tree directory tree
-│   └── Shows filename + row count + file size
-├── DataView               # Right main area
-│   ├── Toolbar            # Search box, field filter dropdown, save-as button
-│   ├── DataTable          # Auto-detected columns from schema
-│   │   └── Nested fields show summary, click row opens drawer
-│   ├── Pagination         # Page nav + "Load All" button
-│   └── DetailDrawer       # Right slide-in drawer
-│       ├── Smart View     # Auto-rendered by detected pattern
-│       ├── Raw JSON       # vue-json-pretty
-│       └── Edit           # JSON editor + Save / Save As
+├── PathInput              # 顶栏：文件夹路径输入 + 扫描按钮
+├── FileTree               # 左侧面板：el-tree 目录树
+│   └── 显示文件名 + 条数 + 文件大小
+├── DataView               # 右侧主区域
+│   ├── Toolbar            # 搜索框、字段筛选下拉、另存为按钮
+│   ├── DataTable          # 根据 schema 自动生成列
+│   │   └── 嵌套字段显示摘要，点击行打开抽屉
+│   ├── Pagination         # 分页导航 + "加载全部"按钮
+│   └── DetailDrawer       # 右侧滑出抽屉
+│       ├── 智能视图        # 根据数据模式自动渲染
+│       ├── 原始 JSON       # vue-json-pretty
+│       └── 编辑           # JSON 编辑器 + 保存 / 另存为
 ```
 
-## Search & Filter
+## 搜索与筛选
 
-- **Full-text search**: Keyword input, backend scans lines for matches, returns matching rows
-- **Field filter**: Dropdown selects a field from schema, input matches against that field's value
-- **Search result highlighting**: Matched text highlighted in results
+- **全文搜索**：输入关键词，后端逐行扫描匹配，返回命中的条目
+- **字段筛选**：下拉选择 schema 中的某个字段 + 输入匹配值进行过滤
+- **搜索结果高亮**：匹配文本高亮显示
 
-## Edit & Save
+## 编辑与保存
 
-- **Default action**: Save overwrites the original line in the source file
-- **Save As**: Dialog to specify a new file path, writes all current data to new file
-- **Delete**: Removes the selected row (line) from the file
-- **Edit UI**: JSON editor in the drawer's Edit tab
+- **默认操作**：保存时覆盖原文件中对应的行
+- **另存为**：弹窗指定新文件路径，将当前数据写入新文件
+- **删除**：从文件中移除选中的行
+- **编辑界面**：抽屉面板的"编辑" Tab 中的 JSON 编辑器
 
-## Startup
+## 启动方式
 
 ```bash
-# Development
-cd frontend && npm run dev    # Vite dev server on :5173
+# 开发环境
+cd frontend && npm run dev    # Vite dev server 端口 :5173
 cd backend && uvicorn main:app --port 8000
 
-# Production
-cd frontend && npm run build  # Outputs to backend/static/
-python main.py --port 8000    # FastAPI serves everything
+# 生产环境
+cd frontend && npm run build  # 输出到 backend/static/
+python main.py --port 8000    # FastAPI 服务一切
 ```
 
-Single command production start: `python main.py --port 8000`, then open `http://localhost:8000`.
+生产环境一键启动：`python main.py --port 8000`，然后打开 `http://localhost:8000`。
