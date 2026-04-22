@@ -6,6 +6,9 @@
     size="50%"
     :destroy-on-close="false"
   >
+    <template #header>
+      <span>数据详情</span>
+    </template>
     <template v-if="row">
       <el-tabs v-model="activeTab">
         <el-tab-pane label="智能视图" name="smart">

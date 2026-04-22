@@ -122,7 +122,7 @@ async function handleSaveAs() {
 
 watch(() => props.filePath, () => {
   if (props.filePath) loadData(0)
-})
+}, { immediate: true })
 </script>
 
 <style scoped>

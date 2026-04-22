@@ -92,4 +92,19 @@ body {
   overflow: hidden;
   background: #ffffff;
 }
+
+/* 禁用 drawer 滑出动画，直接显示 */
+.el-drawer__open .el-drawer.rtl,
+.el-drawer__open .el-drawer.ltr,
+.el-drawer__open .el-drawer.ttb,
+.el-drawer__open .el-drawer.btt {
+  transition: none !important;
+  animation: none !important;
+}
+.el-overlay {
+  transition: none !important;
+}
+.el-drawer {
+  transition: none !important;
+}
 </style>
