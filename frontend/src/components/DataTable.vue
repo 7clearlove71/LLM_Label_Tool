@@ -134,66 +134,67 @@ function formatValue(val) {
 .data-card-list {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 24px;
+  padding: 16px var(--space-lg);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 .data-card {
-  border: 1px solid #eee;
-  border-radius: 8px;
-  padding: 16px;
+  border: 1px solid var(--apple-hairline);
+  border-radius: var(--rounded-lg);
+  padding: 20px var(--space-lg);
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  background: #fff;
+  transition: border-color 0.15s;
+  background: var(--apple-canvas);
 }
 
 .data-card:hover {
-  border-color: #409eff;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.08);
+  border-color: var(--apple-primary);
 }
 
 .card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: var(--space-sm);
 }
 
 .card-index {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: #409eff;
+  letter-spacing: -0.224px;
+  color: var(--apple-primary);
 }
 
 .card-expand-hint {
-  font-size: 11px;
-  color: #c0c4cc;
+  font-size: 12px;
+  letter-spacing: -0.12px;
+  color: var(--apple-ink-muted-48);
 }
 
 .card-fields {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-xs);
   margin-bottom: 10px;
 }
 
 .card-field-tag {
   font-size: 12px;
-  color: #666;
-  background: #f7f8fa;
-  padding: 2px 8px;
-  border-radius: 4px;
+  letter-spacing: -0.12px;
+  color: var(--apple-ink-muted-80);
+  background: var(--apple-canvas-parchment);
+  padding: 2px var(--space-xs);
+  border-radius: var(--space-xxs);
 }
 
 .field-name {
   font-weight: 600;
-  color: #999;
+  color: var(--apple-ink-muted-48);
   margin-right: 4px;
 }
 
-/* 对话预览 */
 .mini-conversation {
   display: flex;
   flex-direction: column;
@@ -201,52 +202,54 @@ function formatValue(val) {
 }
 
 .mini-msg {
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  line-height: 1.5;
+  padding: 10px 14px;
+  border-radius: var(--rounded-sm);
+  font-size: 14px;
+  line-height: 1.47;
+  letter-spacing: -0.224px;
 }
 
 .mini-role {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  margin-right: 8px;
+  margin-right: var(--space-xs);
+  letter-spacing: 0;
 }
 
 .mini-content {
   white-space: pre-wrap;
   word-break: break-word;
+  color: var(--apple-ink);
 }
 
-.role-system { background: #f5f5f5; }
-.role-system .mini-role { color: #999; }
+.role-system { background: var(--apple-canvas-parchment); }
+.role-system .mini-role { color: var(--apple-ink-muted-48); }
 
 .role-user { background: #f0f9eb; }
 .role-user .mini-role { color: #67c23a; }
 
-.role-assistant { background: #ecf5ff; }
-.role-assistant .mini-role { color: #409eff; }
+.role-assistant { background: #f0f4ff; }
+.role-assistant .mini-role { color: var(--apple-primary); }
 
 .mini-more {
   font-size: 12px;
-  color: #999;
+  color: var(--apple-ink-muted-48);
   text-align: center;
-  padding: 4px;
+  padding: var(--space-xxs);
 }
 
-/* 偏好预览 */
 .pref-preview {
   display: flex;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 .pref-side {
   flex: 1;
-  padding: 10px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  line-height: 1.5;
+  padding: 10px 14px;
+  border-radius: var(--rounded-sm);
+  font-size: 14px;
+  line-height: 1.47;
 }
 
 .pref-side.chosen {
@@ -263,44 +266,45 @@ function formatValue(val) {
   font-size: 11px;
   font-weight: 600;
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-xxs);
 }
 
 .pref-text {
   white-space: pre-wrap;
   word-break: break-word;
+  color: var(--apple-ink);
 }
 
-/* 指令预览 */
 .instruction-preview {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-xs);
 }
 
 .inst-section {
-  background: #f7f8fa;
-  border-radius: 6px;
-  padding: 10px 12px;
+  background: var(--apple-canvas-parchment);
+  border-radius: var(--rounded-sm);
+  padding: 10px 14px;
 }
 
 .inst-label {
   font-size: 11px;
   font-weight: 600;
-  color: #999;
+  color: var(--apple-ink-muted-48);
   text-transform: uppercase;
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-xxs);
 }
 
 .inst-text {
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.47;
+  letter-spacing: -0.224px;
   white-space: pre-wrap;
   word-break: break-word;
+  color: var(--apple-ink);
 }
 
-/* 通用字段 */
 .generic-fields {
   display: flex;
   flex-direction: column;
@@ -308,18 +312,20 @@ function formatValue(val) {
 }
 
 .generic-field {
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.47;
+  letter-spacing: -0.224px;
 }
 
 .field-value {
   white-space: pre-wrap;
   word-break: break-word;
+  color: var(--apple-ink);
 }
 
 .no-data {
   text-align: center;
-  color: #999;
+  color: var(--apple-ink-muted-48);
   padding: 48px;
   font-size: 14px;
 }
