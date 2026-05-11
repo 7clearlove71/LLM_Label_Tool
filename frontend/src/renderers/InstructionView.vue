@@ -29,23 +29,27 @@ const props = defineProps({
 }
 
 .section {
-  background: #f7f8fa;
-  border-radius: 8px;
+  background: var(--apple-canvas-parchment);
+  border-radius: var(--rounded-sm);
   padding: 16px;
 }
 
 .section-label {
   font-size: 12px;
   font-weight: 600;
-  color: #999;
+  color: var(--apple-ink-muted-48);
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-xs);
+  letter-spacing: -0.12px;
 }
 
 .section-content {
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
   white-space: pre-wrap;
   word-break: break-word;
+  color: var(--apple-ink);
 }
 </style>

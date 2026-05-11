@@ -30,7 +30,7 @@ function formatValue(val) {
 
 .pref-column {
   flex: 1;
-  border-radius: 8px;
+  border-radius: var(--rounded-sm);
   padding: 16px;
 }
 
@@ -45,15 +45,19 @@ function formatValue(val) {
 }
 
 .pref-label {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  margin-bottom: 8px;
+  letter-spacing: -0.224px;
+  margin-bottom: var(--space-xs);
 }
 
 .pref-content {
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
   white-space: pre-wrap;
   word-break: break-word;
+  color: var(--apple-ink);
 }
 </style>

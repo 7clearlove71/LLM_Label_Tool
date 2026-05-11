@@ -58,22 +58,41 @@ function handleSaveAs() {
 .editor-view {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
-.json-editor :deep(textarea) {
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 13px;
+.json-editor :deep(.el-textarea__inner) {
+  font-family: var(--font-mono);
+  font-size: 14px;
   line-height: 1.5;
+  border-radius: var(--rounded-sm);
+  padding: 16px;
 }
 
 .error-tip {
   color: #f56c6c;
   font-size: 12px;
+  letter-spacing: -0.12px;
 }
 
 .editor-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-xs);
+}
+
+.editor-actions :deep(.el-button--primary) {
+  border-radius: var(--rounded-pill);
+  padding: 10px 22px;
+}
+
+.editor-actions :deep(.el-button--default) {
+  border-radius: var(--rounded-pill);
+  padding: 10px 22px;
+  color: var(--apple-primary);
+  border-color: var(--apple-primary);
+}
+
+.editor-actions :deep(.el-button:active) {
+  transform: scale(0.95);
 }
 </style>

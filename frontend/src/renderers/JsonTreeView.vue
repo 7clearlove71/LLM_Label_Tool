@@ -15,7 +15,8 @@ const props = defineProps({
 
 <style scoped>
 .json-tree-view {
-  padding: 8px;
-  font-size: 13px;
+  padding: var(--space-xs);
+  font-size: 14px;
+  letter-spacing: -0.224px;
 }
 </style>

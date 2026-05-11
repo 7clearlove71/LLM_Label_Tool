@@ -22,12 +22,12 @@ const props = defineProps({
 .conversation-view {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 .message-bubble {
-  border-radius: 8px;
-  padding: 12px 16px;
+  border-radius: var(--rounded-sm);
+  padding: 14px 18px;
 }
 
 .role-label {
@@ -35,12 +35,13 @@ const props = defineProps({
   font-weight: 600;
   margin-bottom: 6px;
   text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .role-system {
-  background: #f5f5f5;
+  background: var(--apple-canvas-parchment);
 }
-.role-system .role-label { color: #999; }
+.role-system .role-label { color: var(--apple-ink-muted-48); }
 
 .role-user {
   background: #f0f9eb;
@@ -48,14 +49,17 @@ const props = defineProps({
 .role-user .role-label { color: #67c23a; }
 
 .role-assistant {
-  background: #ecf5ff;
+  background: #f0f4ff;
 }
-.role-assistant .role-label { color: #409eff; }
+.role-assistant .role-label { color: var(--apple-primary); }
 
 .content {
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
   white-space: pre-wrap;
   word-break: break-word;
+  color: var(--apple-ink);
 }
 </style>
