@@ -3,7 +3,6 @@
     <Toolbar
       :fields="schema.fields"
       @search="handleSearch"
-      @save-as="showSaveAsDialog = true"
     />
     <DataTable
       :rows="rows"
@@ -27,13 +26,6 @@
       @saved="reloadCurrentPage"
       @deleted="reloadCurrentPage"
     />
-    <el-dialog v-model="showSaveAsDialog" title="另存为" width="500px">
-      <el-input v-model="saveAsPath" placeholder="输入目标文件路径" />
-      <template #footer>
-        <el-button @click="showSaveAsDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleSaveAs">确定</el-button>
-      </template>
-    </el-dialog>
   </div>
   <div v-else class="empty-state">
     <p>请在左侧选择一个文件</p>
@@ -42,12 +34,11 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
 import Toolbar from './Toolbar.vue'
 import DataTable from './DataTable.vue'
 import PaginationBar from './PaginationBar.vue'
 import DetailDrawer from './DetailDrawer.vue'
-import { readFile, readFileAll, searchFile, saveAs } from '../api'
+import { readFile, readFileAll, searchFile } from '../api'
 
 const props = defineProps({
   filePath: { type: String, default: '' },
@@ -63,9 +54,6 @@ const allLoaded = ref(false)
 const drawerVisible = ref(false)
 const selectedRow = ref(null)
 const selectedRowIndex = ref(0)
-
-const showSaveAsDialog = ref(false)
-const saveAsPath = ref('')
 
 async function loadData(newOffset = 0) {
   if (!props.filePath) return
@@ -112,14 +100,6 @@ async function reloadCurrentPage() {
   await loadData(offset.value)
 }
 
-async function handleSaveAs() {
-  if (!saveAsPath.value.trim()) return
-  await saveAs(props.filePath, saveAsPath.value.trim())
-  ElMessage.success('另存为成功')
-  showSaveAsDialog.value = false
-  saveAsPath.value = ''
-}
-
 watch(() => props.filePath, () => {
   if (props.filePath) loadData(0)
 }, { immediate: true })
@@ -137,7 +117,9 @@ watch(() => props.filePath, () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
-  font-size: 15px;
+  color: var(--apple-ink-muted-48);
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: -0.374px;
 }
 </style>
