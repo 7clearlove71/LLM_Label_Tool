@@ -49,17 +49,50 @@ watch(() => props.total, () => {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px 24px;
-  border-top: 1px solid #eee;
+  padding: var(--space-sm) var(--space-lg);
+  border-top: 1px solid var(--apple-divider-soft);
 }
 
 .total-info {
-  color: #999;
-  font-size: 13px;
+  color: var(--apple-ink-muted-48);
+  font-size: 14px;
+  letter-spacing: -0.224px;
+}
+
+.pagination-bar :deep(.el-pagination) {
+  --el-pagination-button-width: 32px;
+  --el-pagination-button-height: 32px;
+  --el-pagination-font-size: 13px;
+}
+
+.pagination-bar :deep(.el-pager li) {
+  border-radius: var(--rounded-sm);
+  background: var(--apple-surface-pearl);
+  color: var(--apple-ink);
+  font-weight: 400;
+  min-width: 32px;
+}
+
+.pagination-bar :deep(.el-pager li.is-active) {
+  background: var(--apple-primary);
+  color: var(--apple-on-dark);
+}
+
+.pagination-bar :deep(.btn-prev),
+.pagination-bar :deep(.btn-next) {
+  border-radius: var(--rounded-sm);
+  background: var(--apple-surface-pearl);
+  color: var(--apple-ink-muted-48);
 }
 
 .all-loaded-tip {
-  color: #999;
+  color: var(--apple-ink-muted-48);
   font-size: 12px;
+  letter-spacing: -0.12px;
+}
+
+.pagination-bar :deep(.el-button--primary.is-link) {
+  color: var(--apple-primary);
+  font-size: 14px;
 }
 </style>
