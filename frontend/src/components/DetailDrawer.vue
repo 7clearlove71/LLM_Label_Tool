@@ -5,6 +5,7 @@
     title="数据详情"
     size="50%"
     :destroy-on-close="false"
+    resizable
   >
     <template #header>
       <span>数据详情</span>
@@ -89,3 +90,49 @@ async function handleSaveAs(data) {
   }
 }
 </script>
+
+<style scoped>
+:deep(.el-drawer) {
+  border-left: 1px solid var(--apple-hairline);
+  box-shadow: none !important;
+}
+
+:deep(.el-drawer__header) {
+  margin-bottom: 0;
+  padding: 20px 24px 16px;
+}
+
+:deep(.el-drawer__header span) {
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.19;
+  letter-spacing: 0.231px;
+  color: var(--apple-ink);
+}
+
+:deep(.el-drawer__body) {
+  padding: 0 24px 24px;
+}
+
+:deep(.el-tabs__nav-wrap::after) {
+  height: 1px;
+  background: var(--apple-divider-soft);
+}
+
+:deep(.el-tabs__item) {
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: -0.224px;
+  color: var(--apple-ink-muted-48);
+}
+
+:deep(.el-tabs__item.is-active) {
+  font-weight: 600;
+  color: var(--apple-ink);
+}
+
+:deep(.el-tabs__active-bar) {
+  background-color: var(--apple-primary);
+  height: 2px;
+}
+</style>
