@@ -60,19 +60,38 @@ function formatSize(bytes) {
 .file-tree {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: var(--space-xs);
+}
+
+.file-tree :deep(.el-tree) {
+  background: transparent;
+  --el-tree-node-hover-bg-color: rgba(0, 0, 0, 0.04);
+}
+
+.file-tree :deep(.el-tree-node__content) {
+  height: 34px;
+  border-radius: var(--rounded-sm);
+  padding-left: 8px !important;
+}
+
+.file-tree :deep(.el-tree-node.is-current > .el-tree-node__content) {
+  background: rgba(0, 102, 204, 0.08);
 }
 
 .tree-node {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: -0.224px;
+  color: var(--apple-ink);
   width: 100%;
 }
 
 .node-icon {
   font-size: 14px;
+  flex-shrink: 0;
 }
 
 .node-label {
@@ -83,15 +102,17 @@ function formatSize(bytes) {
 }
 
 .node-size {
-  color: #999;
-  font-size: 11px;
+  color: var(--apple-ink-muted-48);
+  font-size: 12px;
+  letter-spacing: -0.12px;
   flex-shrink: 0;
 }
 
 .empty-tip {
-  padding: 24px;
+  padding: var(--space-lg);
   text-align: center;
-  color: #999;
-  font-size: 13px;
+  color: var(--apple-ink-muted-48);
+  font-size: 14px;
+  letter-spacing: -0.224px;
 }
 </style>
