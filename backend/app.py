@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from backend.routers import scan, file
+from backend.routers import scan, file, bookmark
 
 def create_app() -> FastAPI:
     app = FastAPI(title="LLM 训练数据查看器")
@@ -16,6 +16,7 @@ def create_app() -> FastAPI:
 
     app.include_router(scan.router)
     app.include_router(file.router)
+    app.include_router(bookmark.router)
 
     @app.get("/api/health")
     def health():

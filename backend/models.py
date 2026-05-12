@@ -29,3 +29,7 @@ class FileSearchRequest(BaseModel):
     path: str
     keyword: str
     field: Optional[str] = None
+
+class BookmarksData(BaseModel):
+    default: Optional[str] = None
+    bookmarks: list[str] = []

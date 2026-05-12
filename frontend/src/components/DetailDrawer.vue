@@ -13,19 +13,7 @@
     <template v-if="row">
       <el-tabs v-model="activeTab">
         <el-tab-pane label="智能视图" name="smart">
-          <ConversationView
-            v-if="detectedPattern === 'conversation'"
-            :messages="row.messages"
-          />
-          <PreferenceView
-            v-else-if="detectedPattern === 'preference'"
-            :data="row"
-          />
-          <InstructionView
-            v-else-if="detectedPattern === 'instruction'"
-            :data="row"
-          />
-          <JsonTreeView v-else :data="row" />
+          <SmartView :data="row" :schema="schema" />
         </el-tab-pane>
         <el-tab-pane label="原始 JSON" name="json">
           <JsonTreeView :data="row" />
@@ -43,11 +31,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import ConversationView from '../renderers/ConversationView.vue'
-import PreferenceView from '../renderers/PreferenceView.vue'
-import InstructionView from '../renderers/InstructionView.vue'
+import SmartView from '../renderers/SmartView.vue'
 import JsonTreeView from '../renderers/JsonTreeView.vue'
 import EditorView from '../renderers/EditorView.vue'
 import { updateRow, saveAs } from '../api'
@@ -63,14 +49,6 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'saved', 'deleted'])
 
 const activeTab = ref('smart')
-
-const detectedPattern = computed(() => {
-  if (!props.schema?.fields) return null
-  for (const field of props.schema.fields) {
-    if (field.pattern) return field.pattern
-  }
-  return null
-})
 
 async function handleSave(data) {
   await updateRow(props.filePath, props.rowIndex, data)

@@ -4,6 +4,7 @@
       :fields="schema.fields"
       @search="handleSearch"
     />
+    <SchemaOverview :schema="schema" />
     <DataTable
       :rows="rows"
       :schema="schema"
@@ -35,6 +36,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import Toolbar from './Toolbar.vue'
+import SchemaOverview from './SchemaOverview.vue'
 import DataTable from './DataTable.vue'
 import PaginationBar from './PaginationBar.vue'
 import DetailDrawer from './DetailDrawer.vue'

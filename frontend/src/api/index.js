@@ -32,3 +32,11 @@ export function saveAs(sourcePath, targetPath) {
 export function searchFile(path, keyword, field = null) {
   return api.post('/api/file/search', { path, keyword, field })
 }
+
+export function getBookmarks() {
+  return api.get('/api/bookmarks')
+}
+
+export function saveBookmarks(data) {
+  return api.put('/api/bookmarks', data)
+}
