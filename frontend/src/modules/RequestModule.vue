@@ -62,7 +62,7 @@ function isDraftMeaningful(d) {
   if (!d) return false
   return !!((d.url && d.url.trim()) || (d.method && d.method !== 'GET') ||
     (d.params && d.params.length) || (d.headers && d.headers.length) ||
-    (d.body && d.body) || (d.form_body && d.form_body.length) ||
+    d.body || (d.form_body && d.form_body.length) ||
     (d.body_type && d.body_type !== 'none'))
 }
 
@@ -173,8 +173,8 @@ function selectSample(s) {
   if (s.id === activeId.value) return
   activeId.value = s.id
   spec.value = { ...emptySpec(), ...snapshot(s.request) }
-  saveState.value = 'saving'
-  persist().then(() => { saveState.value = 'saved' }).catch(() => { saveState.value = '' })
+  // 仅切换选中：静默持久化 active_id（不显示保存指示，纯切换不算编辑）
+  persist().catch(() => {})
 }
 
 async function renameSample({ id, name }) {
