@@ -50,7 +50,7 @@ def send_request(spec: RequestSpec, client: Optional[httpx.Client] = None) -> Re
             body=text,
             truncated=truncated,
         )
-    except httpx.HTTPError as e:
+    except (httpx.HTTPError, httpx.InvalidURL) as e:
         return ResponseResult(error=str(e) or e.__class__.__name__)
     finally:
         if owns_client:

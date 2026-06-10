@@ -56,3 +56,16 @@ def test_send_captures_network_error():
     result = send_request(RequestSpec(url="http://x.com"), client=client)
     assert result.status is None
     assert result.error
+
+
+def test_send_invalid_url_captured():
+    """httpx.InvalidURL（不继承自 HTTPError）也应被捕获为 error，而非冒泡成 500。"""
+
+    class _InvalidURLTransport(httpx.BaseTransport):
+        def handle_request(self, request):
+            raise httpx.InvalidURL("bad url")
+
+    client = httpx.Client(transport=_InvalidURLTransport())
+    result = send_request(RequestSpec(url="http://bad-url-placeholder"), client=client)
+    assert result.status is None
+    assert result.error
