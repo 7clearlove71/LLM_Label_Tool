@@ -40,3 +40,23 @@ export function getBookmarks() {
 export function saveBookmarks(data) {
   return api.put('/api/bookmarks', data)
 }
+
+export function sendRequest(spec) {
+  return api.post('/api/request/send', spec)
+}
+
+export function parseCurl(text) {
+  return api.post('/api/request/parse-curl', { text })
+}
+
+export function toCurl(spec) {
+  return api.post('/api/request/to-curl', spec)
+}
+
+export function getRequestSamples() {
+  return api.get('/api/requests')
+}
+
+export function saveRequestSamples(data) {
+  return api.put('/api/requests', data)
+}
