@@ -25,3 +25,4 @@ dist/
 frontend/dist/
 backend/static/
 .superpowers/
+requests.json
