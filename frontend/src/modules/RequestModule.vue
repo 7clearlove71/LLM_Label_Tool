@@ -1,12 +1,13 @@
 <template>
   <div class="request-module">
-    <aside class="rm-sidebar">
+    <aside class="rm-sidebar" :style="{ width: sidebarWidth + 'px' }">
       <SampleList
         :samples="store.samples" :active-id="activeId"
         @new="newSample" @import-curl="showImport = true"
         @load="selectSample" @clone="cloneSample" @delete="deleteSample" @rename="renameSample"
       />
     </aside>
+    <div class="rm-resize-handle" @mousedown="startResize"></div>
     <main class="rm-main">
       <template v-if="activeId">
         <RequestBuilder
@@ -73,6 +74,27 @@ const response = ref(null)
 const sending = ref(false)
 const showImport = ref(false)
 const saveState = ref('')
+const sidebarWidth = ref(260)
+
+function startResize(e) {
+  e.preventDefault()
+  const startX = e.clientX
+  const startWidth = sidebarWidth.value
+  function onMouseMove(ev) {
+    const delta = ev.clientX - startX
+    sidebarWidth.value = Math.min(480, Math.max(180, startWidth + delta))
+  }
+  function onMouseUp() {
+    document.removeEventListener('mousemove', onMouseMove)
+    document.removeEventListener('mouseup', onMouseUp)
+    document.body.style.cursor = ''
+    document.body.style.userSelect = ''
+  }
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+  document.addEventListener('mousemove', onMouseMove)
+  document.addEventListener('mouseup', onMouseUp)
+}
 
 let saveTimer = null
 
@@ -241,7 +263,9 @@ async function copyCurl() {
 
 <style scoped>
 .request-module { display: flex; flex: 1; min-height: 0; }
-.rm-sidebar { width: 260px; flex-shrink: 0; overflow: auto; border-right: 1px solid var(--apple-hairline, rgba(0,0,0,0.08)); }
+.rm-sidebar { flex-shrink: 0; overflow: auto; }
+.rm-resize-handle { width: 4px; cursor: col-resize; background: var(--apple-hairline, rgba(0,0,0,0.08)); flex-shrink: 0; transition: background 0.15s; }
+.rm-resize-handle:hover { background: var(--apple-primary, #007aff); }
 .rm-main { flex: 1; min-width: 0; overflow: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
 .rm-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #999; }
 .rm-empty-tip { font-size: 14px; }

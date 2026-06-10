@@ -18,9 +18,9 @@
       <span class="sl-method">{{ s.request.method }}</span>
       <span class="sl-name">{{ s.name }}</span>
       <span class="sl-actions">
-        <button class="sl-btn" @click.stop="emit('clone', s)">克隆</button>
-        <button class="sl-btn" @click.stop="rename(s)">改名</button>
-        <button class="sl-btn del" @click.stop="confirmDelete(s)">删</button>
+        <button class="sl-btn" @click.stop="emit('clone', s)">copy</button>
+        <button class="sl-btn" @click.stop="rename(s)">rename</button>
+        <button class="sl-btn del" @click.stop="confirmDelete(s)">del</button>
       </span>
     </div>
   </div>

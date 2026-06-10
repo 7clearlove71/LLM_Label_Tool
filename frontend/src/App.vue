@@ -26,7 +26,7 @@ import RequestModule from './modules/RequestModule.vue'
 
 const modules = [
   { key: 'viewer', label: '数据查看器' },
-  { key: 'request', label: '请求工具' }
+  { key: 'request', label: 'postwoman' }
 ]
 const activeModule = ref('viewer')
 </script>
@@ -39,12 +39,11 @@ const activeModule = ref('viewer')
 }
 
 .global-nav {
-  height: 44px;
-  padding: 0 24px;
+  padding: 8px 24px 6px;
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 24px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   background: var(--apple-surface-black);
   flex-shrink: 0;
 }
