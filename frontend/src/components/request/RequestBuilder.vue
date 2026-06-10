@@ -8,10 +8,9 @@
       <el-button type="primary" :loading="loading" @click="emit('send')">发送</el-button>
     </div>
     <div class="rb-tools">
-      <button class="rb-tool" @click="emit('import-curl')">导入 curl</button>
       <button class="rb-tool" @click="emit('copy-curl')">复制为 curl</button>
-      <button class="rb-tool" @click="emit('save-as')">另存为样例</button>
-      <button class="rb-tool" v-if="canUpdate" @click="emit('update-sample')">更新当前样例</button>
+      <span class="rb-save" v-if="saveState === 'saving'">保存中…</span>
+      <span class="rb-save saved" v-else-if="saveState === 'saved'">已保存</span>
     </div>
 
     <el-tabs v-model="activeTab" class="rb-tabs">
@@ -41,9 +40,9 @@ import BodyEditor from './BodyEditor.vue'
 const props = defineProps({
   spec: { type: Object, required: true },
   loading: { type: Boolean, default: false },
-  canUpdate: { type: Boolean, default: false },
+  saveState: { type: String, default: '' },
 })
-const emit = defineEmits(['update:spec', 'send', 'import-curl', 'copy-curl', 'save-as', 'update-sample'])
+const emit = defineEmits(['update:spec', 'send', 'copy-curl'])
 
 const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
 const activeTab = ref('params')
@@ -57,6 +56,8 @@ function update(key, value) {
 .request-builder { display: flex; flex-direction: column; gap: 12px; }
 .rb-line { display: flex; gap: 8px; }
 .rb-url { flex: 1; }
-.rb-tools { display: flex; gap: 14px; }
+.rb-tools { display: flex; align-items: center; gap: 14px; }
 .rb-tool { border: none; background: none; color: var(--apple-primary, #007aff); cursor: pointer; font-size: 13px; }
+.rb-save { font-size: 12px; color: #999; }
+.rb-save.saved { color: #34c759; }
 </style>

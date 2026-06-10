@@ -72,6 +72,7 @@ class RequestSample(BaseModel):
 class RequestStore(BaseModel):
     samples: list[RequestSample] = []
     draft: Optional[RequestSpec] = None
+    active_id: Optional[str] = None
 
 
 class CurlText(BaseModel):

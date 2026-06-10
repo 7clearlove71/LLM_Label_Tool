@@ -55,3 +55,28 @@ def test_save_is_atomic_no_partial_temp_left(tmp_path, monkeypatch):
     # 内容可正常读回
     loaded = store_service.load_store()
     assert loaded.samples[0].name == "t"
+
+
+def test_save_and_load_preserves_active_id(tmp_path, monkeypatch):
+    path = str(tmp_path / "requests.json")
+    monkeypatch.setattr(store_service, "REQUESTS_PATH", path)
+
+    store_service.save_store(RequestStore(
+        samples=[RequestSample(id="abc", name="t", request=RequestSpec(url="http://x.com"))],
+        active_id="abc",
+    ))
+    loaded = store_service.load_store()
+    assert loaded.active_id == "abc"
+
+
+def test_load_legacy_file_without_active_id(tmp_path, monkeypatch):
+    path = tmp_path / "requests.json"
+    path.write_text(
+        '{"samples": [], "draft": {"method": "GET", "url": "http://old.com"}}',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(store_service, "REQUESTS_PATH", str(path))
+
+    loaded = store_service.load_store()
+    assert loaded.active_id is None
+    assert loaded.draft.url == "http://old.com"
