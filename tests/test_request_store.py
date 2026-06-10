@@ -24,3 +24,34 @@ def test_save_and_load_roundtrip(tmp_path, monkeypatch):
     assert loaded.samples[0].name == "登录"
     assert loaded.samples[0].request.method == "POST"
     assert loaded.draft.url == "http://draft.com"
+
+
+import json as _json
+
+
+def test_load_corrupted_file_returns_empty_and_backs_up(tmp_path, monkeypatch):
+    path = tmp_path / "requests.json"
+    path.write_text("{ this is not valid json", encoding="utf-8")
+    monkeypatch.setattr(store_service, "REQUESTS_PATH", str(path))
+
+    data = store_service.load_store()
+    assert data.samples == []
+    assert data.draft is None
+    # 损坏文件应被备份，原路径不再是损坏内容
+    assert (tmp_path / "requests.json.corrupt").exists()
+
+
+def test_save_is_atomic_no_partial_temp_left(tmp_path, monkeypatch):
+    path = tmp_path / "requests.json"
+    monkeypatch.setattr(store_service, "REQUESTS_PATH", str(path))
+
+    store_service.save_store(RequestStore(
+        samples=[RequestSample(id="1", name="t", request=RequestSpec(url="http://x.com"))],
+        draft=None,
+    ))
+    # 写完后目录里不应残留临时文件，只有目标文件
+    leftovers = [p.name for p in tmp_path.iterdir() if p.name != "requests.json"]
+    assert leftovers == []
+    # 内容可正常读回
+    loaded = store_service.load_store()
+    assert loaded.samples[0].name == "t"
