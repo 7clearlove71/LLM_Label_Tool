@@ -69,3 +69,16 @@ def test_send_invalid_url_captured():
     result = send_request(RequestSpec(url="http://bad-url-placeholder"), client=client)
     assert result.status is None
     assert result.error
+
+
+def test_send_client_construction_error_captured(monkeypatch):
+    # 模拟构造 httpx.Client 时抛异常（如环境代理缺包），应被捕获为 error 而非抛出
+    import backend.services.http_client as mod
+
+    def boom(*args, **kwargs):
+        raise ImportError("Using SOCKS proxy, but the 'socksio' package is not installed.")
+
+    monkeypatch.setattr(mod.httpx, "Client", boom)
+    result = mod.send_request(RequestSpec(url="http://example.com"))
+    assert result.status is None
+    assert result.error

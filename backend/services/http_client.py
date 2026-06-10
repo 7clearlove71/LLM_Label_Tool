@@ -20,9 +20,13 @@ def send_request(spec: RequestSpec, client: Optional[httpx.Client] = None) -> Re
 
     owns_client = client is None
     if owns_client:
-        client = httpx.Client(timeout=DEFAULT_TIMEOUT, follow_redirects=True)
+        client = None
 
     try:
+        if owns_client:
+            client = httpx.Client(
+                timeout=DEFAULT_TIMEOUT, follow_redirects=True, trust_env=False
+            )
         start = time.perf_counter()
         resp = client.request(
             spec.method.upper() or "GET",
@@ -50,8 +54,8 @@ def send_request(spec: RequestSpec, client: Optional[httpx.Client] = None) -> Re
             body=text,
             truncated=truncated,
         )
-    except (httpx.HTTPError, httpx.InvalidURL) as e:
+    except Exception as e:
         return ResponseResult(error=str(e) or e.__class__.__name__)
     finally:
-        if owns_client:
+        if owns_client and client is not None:
             client.close()
