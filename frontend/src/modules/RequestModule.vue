@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import SampleList from '../components/request/SampleList.vue'
 import RequestBuilder from '../components/request/RequestBuilder.vue'
@@ -36,6 +36,11 @@ function emptySpec() {
   return { method: 'GET', url: '', params: [], headers: [], body_type: 'none', body: '', form_body: [] }
 }
 
+// 深拷贝快照：样例保存的请求与正在编辑的 spec 解耦
+function snapshot(s) {
+  return JSON.parse(JSON.stringify(s))
+}
+
 const store = ref({ samples: [], draft: null })
 const spec = ref(emptySpec())
 const activeId = ref('')
@@ -44,6 +49,16 @@ const sending = ref(false)
 const showImport = ref(false)
 
 let saveTimer = null
+
+// 串行化所有 persist：避免并发 PUT 因网络重排互相覆盖。
+// 每个排队任务在执行时读取最新的 store/spec，发送完整状态。
+let persistChain = Promise.resolve()
+function persist() {
+  const run = () => saveRequestSamples({ samples: store.value.samples, draft: spec.value })
+  const result = persistChain.then(run, run)
+  persistChain = result.catch(() => {})
+  return result
+}
 
 onMounted(async () => {
   try {
@@ -55,14 +70,14 @@ onMounted(async () => {
   }
 })
 
-function persist() {
-  return saveRequestSamples({ samples: store.value.samples, draft: spec.value })
-}
-
 function scheduleDraftSave() {
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => persist().catch(() => {}), 500)
 }
+
+onUnmounted(() => {
+  if (saveTimer) clearTimeout(saveTimer)
+})
 
 function onSpecChange(next) {
   spec.value = next
@@ -101,39 +116,73 @@ function onCurlImported(parsed) {
 
 function loadSample(s) {
   activeId.value = s.id
-  spec.value = { ...emptySpec(), ...s.request }
+  spec.value = { ...emptySpec(), ...snapshot(s.request) }
   scheduleDraftSave()
 }
 
 async function saveAsSample() {
+  let value
   try {
-    const { value } = await ElMessageBox.prompt('样例名称', '另存为样例')
-    if (!value || !value.trim()) return
-    const id = String(Date.now())
-    store.value.samples.push({ id, name: value.trim(), request: spec.value })
-    activeId.value = id
+    const res = await ElMessageBox.prompt('样例名称', '另存为样例')
+    value = res.value
+  } catch (e) {
+    return // 用户取消
+  }
+  if (!value || !value.trim()) return
+  const id = String(Date.now())
+  const entry = { id, name: value.trim(), request: snapshot(spec.value) }
+  store.value.samples.push(entry)
+  activeId.value = id
+  try {
     await persist()
     ElMessage.success('已保存样例')
-  } catch (e) { /* 取消 */ }
+  } catch (e) {
+    // 回滚乐观写入
+    store.value.samples = store.value.samples.filter((s) => s.id !== id)
+    if (activeId.value === id) activeId.value = ''
+    ElMessage.error('保存样例失败：' + (e.response?.data?.detail || e.message))
+  }
 }
 
 async function updateSample() {
   const target = store.value.samples.find((s) => s.id === activeId.value)
   if (!target) return
-  target.request = spec.value
-  await persist()
-  ElMessage.success('已更新样例')
+  const prev = target.request
+  target.request = snapshot(spec.value)
+  try {
+    await persist()
+    ElMessage.success('已更新样例')
+  } catch (e) {
+    target.request = prev // 回滚
+    ElMessage.error('更新样例失败：' + (e.response?.data?.detail || e.message))
+  }
 }
 
-function renameSample({ id, name }) {
+async function renameSample({ id, name }) {
   const target = store.value.samples.find((s) => s.id === id)
-  if (target) { target.name = name; persist() }
+  if (!target) return
+  const prev = target.name
+  target.name = name
+  try {
+    await persist()
+  } catch (e) {
+    target.name = prev // 回滚
+    ElMessage.error('重命名失败：' + (e.response?.data?.detail || e.message))
+  }
 }
 
 async function deleteSample(id) {
+  const prevSamples = store.value.samples
+  const prevActive = activeId.value
   store.value.samples = store.value.samples.filter((s) => s.id !== id)
   if (activeId.value === id) activeId.value = ''
-  await persist()
+  try {
+    await persist()
+  } catch (e) {
+    store.value.samples = prevSamples // 回滚
+    activeId.value = prevActive
+    ElMessage.error('删除样例失败：' + (e.response?.data?.detail || e.message))
+  }
 }
 </script>
 
