@@ -19,7 +19,7 @@ LLM 训练数据查看器 — 本地部署的 Web 工具，用于浏览、查看
 终端 1 — 后端:
 ```bash
 pip install -r requirements.txt
-python main.py --port 8000
+python main.py --port 8002
 ```
 
 终端 2 — 前端:
@@ -33,10 +33,10 @@ npm run dev
 
 ```bash
 cd frontend && npm run build
-python main.py --port 8000
+python main.py --port 8002
 ```
 
-打开 http://localhost:8000
+打开 http://localhost:8002
 
 ## 运行测试
 
