@@ -1,4 +1,5 @@
 import shlex
+from urllib.parse import urlencode
 from backend.models import RequestSpec, KeyValueItem
 
 _DATA_FLAGS = ("-d", "--data", "--data-raw", "--data-binary", "--data-ascii")
@@ -58,3 +59,33 @@ def parse_curl(text: str) -> RequestSpec:
         spec.body_type = "json" if "json" in content_type.lower() else "raw"
 
     return spec
+
+
+def _quote(s: str) -> str:
+    return "'" + s.replace("'", "'\\''") + "'"
+
+
+def to_curl(spec: RequestSpec) -> str:
+    parts = ["curl"]
+    if spec.method and spec.method.upper() != "GET":
+        parts += ["-X", spec.method.upper()]
+
+    url = spec.url
+    enabled_params = [(p.key, p.value) for p in spec.params if p.enabled and p.key]
+    if enabled_params:
+        sep = "&" if "?" in url else "?"
+        url = url + sep + urlencode(enabled_params)
+    parts.append(_quote(url))
+
+    for h in spec.headers:
+        if h.enabled and h.key:
+            parts += ["-H", _quote(f"{h.key}: {h.value}")]
+
+    if spec.body_type in ("json", "raw") and spec.body:
+        parts += ["--data-raw", _quote(spec.body)]
+    elif spec.body_type == "form":
+        data = urlencode([(f.key, f.value) for f in spec.form_body if f.enabled and f.key])
+        if data:
+            parts += ["--data", _quote(data)]
+
+    return " ".join(parts)
