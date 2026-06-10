@@ -1,10 +1,10 @@
 <template>
   <div class="kv-editor">
-    <div v-for="(row, idx) in rows" :key="idx" class="kv-row">
+    <div v-for="row in rows" :key="row._id" class="kv-row">
       <el-checkbox v-model="row.enabled" @change="emitChange" />
       <el-input v-model="row.key" placeholder="Key" size="small" @input="emitChange" />
       <el-input v-model="row.value" placeholder="Value" size="small" @input="emitChange" />
-      <button class="kv-del" @click="removeRow(idx)">✕</button>
+      <button class="kv-del" @click="removeRow(row._id)">✕</button>
     </div>
     <button class="kv-add" @click="addRow">+ 添加一行</button>
   </div>
@@ -16,27 +16,33 @@ import { ref, watch } from 'vue'
 const props = defineProps({ modelValue: { type: Array, default: () => [] } })
 const emit = defineEmits(['update:modelValue'])
 
-const rows = ref(props.modelValue.map((r) => ({ ...r })))
+let _uid = 0
+const withId = (r) => ({ key: '', value: '', enabled: true, ...r, _id: ++_uid })
+
+const rows = ref(props.modelValue.map(withId))
+
+const strip = (list) => list.map(({ key, value, enabled }) => ({ key, value, enabled }))
 
 watch(
   () => props.modelValue,
   (val) => {
-    if (JSON.stringify(val) !== JSON.stringify(rows.value)) {
-      rows.value = (val || []).map((r) => ({ ...r }))
+    if (JSON.stringify(val || []) !== JSON.stringify(strip(rows.value))) {
+      rows.value = (val || []).map(withId)
     }
-  }
+  },
+  { deep: true }
 )
 
 function addRow() {
-  rows.value.push({ key: '', value: '', enabled: true })
+  rows.value.push(withId({}))
   emitChange()
 }
-function removeRow(i) {
-  rows.value.splice(i, 1)
+function removeRow(id) {
+  rows.value = rows.value.filter((r) => r._id !== id)
   emitChange()
 }
 function emitChange() {
-  emit('update:modelValue', rows.value.map((r) => ({ ...r })))
+  emit('update:modelValue', strip(rows.value))
 }
 </script>
 

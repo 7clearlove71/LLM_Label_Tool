@@ -25,13 +25,20 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   response: { type: Object, default: null },
   loading: { type: Boolean, default: false },
 })
 const activeTab = ref('body')
+
+watch(
+  () => props.response,
+  (val) => {
+    if (val && !val.error) activeTab.value = 'body'
+  }
+)
 
 const statusClass = computed(() => {
   const s = props.response?.status || 0
