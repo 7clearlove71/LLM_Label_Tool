@@ -91,20 +91,6 @@ function isDraftMeaningful(d) {
 function nowIso() {
   return new Date().toISOString()
 }
-// 从模板 body JSON 解析出 messages（切换 请求→对话 用）
-function parseMessages(bodyStr) {
-  try {
-    const obj = JSON.parse(bodyStr || '{}')
-    if (Array.isArray(obj.messages)) {
-      return obj.messages.map((m) => ({
-        role: m.role || 'user',
-        content: typeof m.content === 'string' ? m.content : JSON.stringify(m.content),
-        reasoning: '',
-      }))
-    }
-  } catch (e) { /* 非 JSON */ }
-  return []
-}
 // 模板 body + 对话 messages 装配为发送 body（切换 对话→请求、发送 用）
 function assembleBody(bodyStr, messages) {
   let base = {}
@@ -281,7 +267,8 @@ function onModeChange(next) {
   if (next === 'chat') {
     if (!s.conversations) s.conversations = []
     if (!s.active_conversation_id || !activeConversation()) {
-      const conv = { id: genId(), name: '新对话', messages: parseMessages(spec.value.body), created_at: nowIso(), updated_at: nowIso() }
+      // 空白起手：切到对话时建空对话，不从请求 body 带入 messages
+      const conv = { id: genId(), name: '新对话', messages: [], created_at: nowIso(), updated_at: nowIso() }
       s.conversations.unshift(conv)
       s.active_conversation_id = conv.id
     }
