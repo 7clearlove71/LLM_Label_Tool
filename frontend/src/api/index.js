@@ -60,3 +60,60 @@ export function getRequestSamples() {
 export function saveRequestSamples(data) {
   return api.put('/api/requests', data)
 }
+
+// 解析单个 SSE 块（event: ... / data: ...）
+function parseSSEChunk(chunk) {
+  let event = 'message'
+  let data = ''
+  for (const line of chunk.split('\n')) {
+    if (line.startsWith('event:')) event = line.slice(6).trim()
+    else if (line.startsWith('data:')) data += line.slice(5).trim()
+  }
+  if (!data) return null
+  try {
+    return { event, data: JSON.parse(data) }
+  } catch {
+    return null
+  }
+}
+
+// 流式对话：POST spec，逐块回调。onDelta({content,reasoning}) / onError(msg)。
+// 返回 Promise，结束（done/流关闭/abort）后 resolve。
+export async function chatStream(spec, { onDelta, onError, signal }) {
+  let resp
+  try {
+    resp = await fetch('/api/request/chat/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(spec),
+      signal,
+    })
+  } catch (e) {
+    if (e.name !== 'AbortError') onError(e.message)
+    return
+  }
+  if (!resp.ok || !resp.body) {
+    onError(`HTTP ${resp.status}`)
+    return
+  }
+  const reader = resp.body.getReader()
+  const decoder = new TextDecoder()
+  let buf = ''
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buf += decoder.decode(value, { stream: true })
+      const chunks = buf.split('\n\n')
+      buf = chunks.pop()
+      for (const chunk of chunks) {
+        const ev = parseSSEChunk(chunk)
+        if (!ev) continue
+        if (ev.event === 'delta') onDelta(ev.data)
+        else if (ev.event === 'error') onError(ev.data.message || '上游错误')
+      }
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') onError(e.message)
+  }
+}
