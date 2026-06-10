@@ -92,14 +92,14 @@ function nowIso() {
   return new Date().toISOString()
 }
 // 模板 body + 对话 messages 装配为发送 body（切换 对话→请求、发送 用）
-function assembleBody(bodyStr, messages) {
+// stream：聊天流式发送为 true；切回请求编辑为 false（请求编辑器走同步发送）
+// appendUser：非空时在末尾补一条占位 user 消息，方便切回请求后手动改下一轮
+function assembleBody(bodyStr, messages, { stream = true, appendUser = null } = {}) {
   let base = {}
   try { base = JSON.parse(bodyStr || '{}') } catch (e) { base = {} }
-  return JSON.stringify({
-    ...base,
-    messages: messages.map((m) => ({ role: m.role, content: m.content })),
-    stream: true,
-  }, null, 2)
+  const msgs = messages.map((m) => ({ role: m.role, content: m.content }))
+  if (appendUser !== null) msgs.push({ role: 'user', content: appendUser })
+  return JSON.stringify({ ...base, messages: msgs, stream }, null, 2)
 }
 
 const store = ref({ samples: [] })
@@ -276,7 +276,8 @@ function onModeChange(next) {
   } else {
     const c = activeConversation()
     if (c) {
-      const next_body = assembleBody(spec.value.body, c.messages)
+      // 切回请求：stream=false，并补一条占位 user 消息便于手动改下一轮
+      const next_body = assembleBody(spec.value.body, c.messages, { stream: false, appendUser: 'xxx' })
       spec.value = { ...spec.value, method: 'POST', body_type: 'json', body: next_body }
       s.request = snapshot(spec.value)
     }
