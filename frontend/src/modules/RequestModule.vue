@@ -11,12 +11,33 @@
     <main class="rm-main">
       <template v-if="activeId">
         <RequestBuilder
-          :spec="spec" :loading="sending" :save-state="saveState"
+          v-if="mode === 'request'"
+          :spec="spec" :loading="sending" :save-state="saveState" :mode="mode"
           @update:spec="onSpecChange"
+          @update:mode="onModeChange"
           @send="send"
           @copy-curl="copyCurl"
         />
-        <ResponseView :response="response" :loading="sending" />
+        <ResponseView v-if="mode === 'request'" :response="response" :loading="sending" />
+        <template v-else>
+          <div class="rm-chat-bar">
+            <el-radio-group :model-value="mode" size="small" @change="onModeChange">
+              <el-radio-button value="request">请求</el-radio-button>
+              <el-radio-button value="chat">对话</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="rm-chat-body">
+            <aside class="rm-conv-side">
+              <ConversationList
+                :conversations="activeSample()?.conversations || []"
+                :active-id="activeSample()?.active_conversation_id || ''"
+                @new="newConversation" @select="selectConversation"
+                @rename="renameConversation" @delete="deleteConversation"
+              />
+            </aside>
+            <ChatView :messages="currentMessages" :streaming="streaming" @send="sendChat" @stop="stopChat" />
+          </div>
+        </template>
       </template>
       <div v-else class="rm-empty">
         <p class="rm-empty-tip">还没有请求样例</p>
@@ -38,7 +59,9 @@ import SampleList from '../components/request/SampleList.vue'
 import RequestBuilder from '../components/request/RequestBuilder.vue'
 import ResponseView from '../components/request/ResponseView.vue'
 import CurlImportDialog from '../components/request/CurlImportDialog.vue'
-import { sendRequest, toCurl, getRequestSamples, saveRequestSamples } from '../api'
+import ChatView from '../components/request/ChatView.vue'
+import ConversationList from '../components/request/ConversationList.vue'
+import { sendRequest, toCurl, getRequestSamples, saveRequestSamples, chatStream } from '../api'
 
 function emptySpec() {
   return { method: 'GET', url: '', params: [], headers: [], body_type: 'none', body: '', form_body: [] }
@@ -67,6 +90,34 @@ function isDraftMeaningful(d) {
     (d.body_type && d.body_type !== 'none'))
 }
 
+function nowIso() {
+  return new Date().toISOString()
+}
+// 从模板 body JSON 解析出 messages（切换 请求→对话 用）
+function parseMessages(bodyStr) {
+  try {
+    const obj = JSON.parse(bodyStr || '{}')
+    if (Array.isArray(obj.messages)) {
+      return obj.messages.map((m) => ({
+        role: m.role || 'user',
+        content: typeof m.content === 'string' ? m.content : JSON.stringify(m.content),
+        reasoning: '',
+      }))
+    }
+  } catch (e) { /* 非 JSON */ }
+  return []
+}
+// 模板 body + 对话 messages 装配为发送 body（切换 对话→请求、发送 用）
+function assembleBody(bodyStr, messages) {
+  let base = {}
+  try { base = JSON.parse(bodyStr || '{}') } catch (e) { base = {} }
+  return JSON.stringify({
+    ...base,
+    messages: messages.map((m) => ({ role: m.role, content: m.content })),
+    stream: true,
+  }, null, 2)
+}
+
 const store = ref({ samples: [] })
 const spec = ref(emptySpec())
 const activeId = ref('')
@@ -74,6 +125,24 @@ const response = ref(null)
 const sending = ref(false)
 const showImport = ref(false)
 const saveState = ref('')
+const mode = ref('request')
+const streaming = ref(false)
+let chatAbort = null
+
+function activeSample() {
+  return store.value.samples.find((s) => s.id === activeId.value)
+}
+function activeConversation() {
+  const s = activeSample()
+  if (!s) return null
+  return (s.conversations || []).find((c) => c.id === s.active_conversation_id) || null
+}
+const currentMessages = ref([])
+function syncMessagesRef() {
+  const c = activeConversation()
+  currentMessages.value = c ? c.messages : []
+}
+
 const sidebarWidth = ref(260)
 
 function startResize(e) {
@@ -117,6 +186,8 @@ onMounted(async () => {
       store.value.samples.push(entry)
       activeId.value = entry.id
       spec.value = { ...emptySpec(), ...snapshot(entry.request) }
+      mode.value = 'request'
+      syncMessagesRef()
       await persist() // 落库迁移结果（不再发送 draft）
       return
     }
@@ -126,6 +197,8 @@ onMounted(async () => {
     if (target) {
       activeId.value = target.id
       spec.value = { ...emptySpec(), ...snapshot(target.request) }
+      mode.value = target.mode || 'request'
+      syncMessagesRef()
     }
   } catch (e) {
     ElMessage.error('加载样例失败：' + e.message)
@@ -195,8 +268,109 @@ function selectSample(s) {
   if (s.id === activeId.value) return
   activeId.value = s.id
   spec.value = { ...emptySpec(), ...snapshot(s.request) }
-  // 仅切换选中：静默持久化 active_id（不显示保存指示，纯切换不算编辑）
+  mode.value = s.mode || 'request'
+  if (!s.conversations) s.conversations = []
+  if (mode.value === 'chat' && !s.active_conversation_id && s.conversations.length) {
+    s.active_conversation_id = s.conversations[0].id
+  }
+  syncMessagesRef()
   persist().catch(() => {})
+}
+
+function onModeChange(next) {
+  const s = activeSample()
+  if (!s) return
+  if (next === 'chat') {
+    if (!s.conversations) s.conversations = []
+    if (!s.active_conversation_id || !activeConversation()) {
+      const conv = { id: genId(), name: '新对话', messages: parseMessages(spec.value.body), created_at: nowIso(), updated_at: nowIso() }
+      s.conversations.unshift(conv)
+      s.active_conversation_id = conv.id
+    }
+    syncMessagesRef()
+  } else {
+    const c = activeConversation()
+    if (c) {
+      const next_body = assembleBody(spec.value.body, c.messages)
+      spec.value = { ...spec.value, method: 'POST', body_type: 'json', body: next_body }
+      s.request = snapshot(spec.value)
+    }
+  }
+  mode.value = next
+  s.mode = next
+  persist().catch(() => {})
+}
+
+function newConversation() {
+  const s = activeSample()
+  if (!s) return
+  const conv = { id: genId(), name: '新对话', messages: [], created_at: nowIso(), updated_at: nowIso() }
+  if (!s.conversations) s.conversations = []
+  s.conversations.unshift(conv)
+  s.active_conversation_id = conv.id
+  syncMessagesRef()
+  persist().catch(() => {})
+}
+function selectConversation(id) {
+  const s = activeSample()
+  if (!s) return
+  s.active_conversation_id = id
+  syncMessagesRef()
+  persist().catch(() => {})
+}
+function renameConversation({ id, name }) {
+  const s = activeSample()
+  const c = s && s.conversations.find((x) => x.id === id)
+  if (!c) return
+  c.name = name
+  persist().catch(() => {})
+}
+function deleteConversation(id) {
+  const s = activeSample()
+  if (!s) return
+  s.conversations = s.conversations.filter((c) => c.id !== id)
+  if (s.active_conversation_id === id) {
+    s.active_conversation_id = s.conversations[0]?.id || null
+  }
+  syncMessagesRef()
+  persist().catch(() => {})
+}
+
+async function sendChat(text) {
+  const s = activeSample()
+  const c = activeConversation()
+  if (!s || !c || streaming.value) return
+  c.messages.push({ role: 'user', content: text, reasoning: '' })
+  c.messages.push({ role: 'assistant', content: '', reasoning: '' })
+  // 取响应式数组里的元素引用：流式增量改它才能触发逐字渲染
+  const assistant = c.messages[c.messages.length - 1]
+  syncMessagesRef()
+  streaming.value = true
+  chatAbort = new AbortController()
+  const chatSpec = { ...s.request, method: 'POST', body_type: 'json', body: assembleBody(s.request.body, c.messages.slice(0, -1)) }
+  let errored = false
+  await chatStream(chatSpec, {
+    signal: chatAbort.signal,
+    onDelta: (d) => {
+      if (d.content) assistant.content += d.content
+      if (d.reasoning) assistant.reasoning += d.reasoning
+    },
+    onError: (msg) => {
+      errored = true
+      ElMessage.error('对话失败：' + msg)
+    },
+  })
+  streaming.value = false
+  chatAbort = null
+  if (errored && !assistant.content && !assistant.reasoning) {
+    c.messages.pop()
+  }
+  c.updated_at = nowIso()
+  syncMessagesRef()
+  persist().catch(() => {})
+}
+function stopChat() {
+  if (chatAbort) chatAbort.abort()
 }
 
 async function renameSample({ id, name }) {
@@ -266,8 +440,11 @@ async function copyCurl() {
 .rm-sidebar { flex-shrink: 0; overflow: auto; }
 .rm-resize-handle { width: 4px; cursor: col-resize; background: var(--apple-hairline, rgba(0,0,0,0.08)); flex-shrink: 0; transition: background 0.15s; }
 .rm-resize-handle:hover { background: var(--apple-primary, #007aff); }
-.rm-main { flex: 1; min-width: 0; overflow: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+.rm-main { flex: 1; min-width: 0; overflow: hidden; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
 .rm-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #999; }
 .rm-empty-tip { font-size: 14px; }
 .rm-empty-actions { display: flex; gap: 12px; }
+.rm-chat-bar { display: flex; justify-content: flex-end; }
+.rm-chat-body { flex: 1; min-height: 0; display: flex; gap: 12px; }
+.rm-conv-side { width: 200px; flex-shrink: 0; overflow: auto; border-right: 1px solid var(--apple-hairline, rgba(0,0,0,0.08)); }
 </style>
