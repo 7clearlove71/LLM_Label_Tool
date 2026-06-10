@@ -66,10 +66,14 @@ function startResize(e) {
 }
 async function handleSaveAs() {
   if (!saveAsPath.value.trim() || !selectedFile.value) return
-  await saveAs(selectedFile.value, saveAsPath.value.trim())
-  ElMessage.success('另存为成功')
-  showSaveAsDialog.value = false
-  saveAsPath.value = ''
+  try {
+    await saveAs(selectedFile.value, saveAsPath.value.trim())
+    ElMessage.success('另存为成功')
+    showSaveAsDialog.value = false
+    saveAsPath.value = ''
+  } catch (e) {
+    ElMessage.error('另存为失败：' + (e.response?.data?.detail || e.message))
+  }
 }
 </script>
 
