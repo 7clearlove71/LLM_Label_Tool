@@ -10,34 +10,32 @@
     <div class="rm-resize-handle" @mousedown="startResize"></div>
     <main class="rm-main">
       <template v-if="activeId">
-        <RequestBuilder
-          v-if="mode === 'request'"
-          :spec="spec" :loading="sending" :save-state="saveState" :mode="mode"
-          @update:spec="onSpecChange"
-          @update:mode="onModeChange"
-          @send="send"
-          @copy-curl="copyCurl"
-        />
-        <ResponseView v-if="mode === 'request'" :response="response" :loading="sending" />
-        <template v-else>
-          <div class="rm-chat-bar">
-            <el-radio-group :model-value="mode" size="small" @change="onModeChange">
-              <el-radio-button value="request">请求</el-radio-button>
-              <el-radio-button value="chat">对话</el-radio-button>
-            </el-radio-group>
-          </div>
-          <div class="rm-chat-body">
-            <aside class="rm-conv-side">
-              <ConversationList
-                :conversations="activeSample()?.conversations || []"
-                :active-id="activeSample()?.active_conversation_id || ''"
-                @new="newConversation" @select="selectConversation"
-                @rename="renameConversation" @delete="deleteConversation"
-              />
-            </aside>
-            <ChatView :messages="currentMessages" :streaming="streaming" @send="sendChat" @stop="stopChat" />
-          </div>
-        </template>
+        <div class="rm-mode-bar">
+          <el-radio-group :model-value="mode" size="small" @change="onModeChange">
+            <el-radio-button value="request">请求</el-radio-button>
+            <el-radio-button value="chat">对话</el-radio-button>
+          </el-radio-group>
+        </div>
+        <div v-if="mode === 'request'" class="rm-req-body">
+          <RequestBuilder
+            :spec="spec" :loading="sending" :save-state="saveState"
+            @update:spec="onSpecChange"
+            @send="send"
+            @copy-curl="copyCurl"
+          />
+          <ResponseView :response="response" :loading="sending" />
+        </div>
+        <div v-else class="rm-chat-body">
+          <aside class="rm-conv-side">
+            <ConversationList
+              :conversations="activeSample()?.conversations || []"
+              :active-id="activeSample()?.active_conversation_id || ''"
+              @new="newConversation" @select="selectConversation"
+              @rename="renameConversation" @delete="deleteConversation"
+            />
+          </aside>
+          <ChatView :messages="currentMessages" :streaming="streaming" @send="sendChat" @stop="stopChat" />
+        </div>
       </template>
       <div v-else class="rm-empty">
         <p class="rm-empty-tip">还没有请求样例</p>
@@ -444,7 +442,8 @@ async function copyCurl() {
 .rm-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #999; }
 .rm-empty-tip { font-size: 14px; }
 .rm-empty-actions { display: flex; gap: 12px; }
-.rm-chat-bar { display: flex; justify-content: flex-end; }
+.rm-mode-bar { display: flex; flex-shrink: 0; }
+.rm-req-body { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 20px; }
 .rm-chat-body { flex: 1; min-height: 0; display: flex; gap: 12px; }
 .rm-conv-side { width: 200px; flex-shrink: 0; overflow: auto; border-right: 1px solid var(--apple-hairline, rgba(0,0,0,0.08)); }
 </style>
