@@ -8,6 +8,13 @@
       <el-button type="primary" :loading="loading" @click="emit('send')">发送</el-button>
     </div>
     <div class="rb-tools">
+      <el-radio-group
+        :model-value="mode" size="small"
+        @change="(v) => emit('update:mode', v)"
+      >
+        <el-radio-button value="request">请求</el-radio-button>
+        <el-radio-button value="chat">对话</el-radio-button>
+      </el-radio-group>
       <button class="rb-tool" @click="emit('copy-curl')">复制为 curl</button>
       <span class="rb-save" v-if="saveState === 'saving'">保存中…</span>
       <span class="rb-save saved" v-else-if="saveState === 'saved'">已保存</span>
@@ -41,8 +48,9 @@ const props = defineProps({
   spec: { type: Object, required: true },
   loading: { type: Boolean, default: false },
   saveState: { type: String, default: '' },
+  mode: { type: String, default: 'request' },
 })
-const emit = defineEmits(['update:spec', 'send', 'copy-curl'])
+const emit = defineEmits(['update:spec', 'send', 'copy-curl', 'update:mode'])
 
 const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
 const activeTab = ref('params')
