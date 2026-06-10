@@ -1,5 +1,11 @@
 import json
-from typing import Iterable, Iterator, Tuple
+from typing import Iterable, Iterator, Optional, Tuple
+
+import httpx
+
+from backend.models import RequestSpec
+
+DEFAULT_TIMEOUT = 120.0
 
 
 def transform_sse_lines(lines: Iterable[str]) -> Iterator[Tuple[str, dict]]:
@@ -34,3 +40,25 @@ def transform_sse_lines(lines: Iterable[str]) -> Iterator[Tuple[str, dict]]:
 
 def format_sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+def stream_chat(spec: RequestSpec, client: Optional[httpx.Client] = None) -> Iterator[str]:
+    """连接上游 LLM，逐行转发为前端 SSE 字符串。"""
+    headers = {h.key: h.value for h in spec.headers if h.enabled and h.key}
+    content = spec.body.encode("utf-8") if spec.body else None
+    owns = client is None
+    try:
+        if owns:
+            client = httpx.Client(timeout=DEFAULT_TIMEOUT, follow_redirects=True, trust_env=False)
+        with client.stream("POST", spec.url, headers=headers or None, content=content) as resp:
+            if resp.status_code >= 400:
+                body = resp.read().decode("utf-8", "replace")
+                yield format_sse("error", {"message": f"上游 {resp.status_code}: {body[:500]}"})
+                return
+            for event, data in transform_sse_lines(resp.iter_lines()):
+                yield format_sse(event, data)
+    except Exception as e:  # noqa: BLE001 — 网络/超时统一回退为 error 事件
+        yield format_sse("error", {"message": str(e) or e.__class__.__name__})
+    finally:
+        if owns and client is not None:
+            client.close()

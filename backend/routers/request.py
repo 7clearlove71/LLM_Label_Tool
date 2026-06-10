@@ -1,8 +1,10 @@
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from backend.models import RequestSpec, ResponseResult, RequestStore, CurlText, CurlResult
 from backend.services.http_client import send_request
 from backend.services.curl_parser import parse_curl, to_curl
 from backend.services.request_store import load_store, save_store
+from backend.services.chat_stream import stream_chat
 
 router = APIRouter()
 
@@ -10,6 +12,11 @@ router = APIRouter()
 @router.post("/api/request/send")
 def send(spec: RequestSpec) -> ResponseResult:
     return send_request(spec)
+
+
+@router.post("/api/request/chat/stream")
+def chat_stream(spec: RequestSpec):
+    return StreamingResponse(stream_chat(spec), media_type="text/event-stream")
 
 
 @router.post("/api/request/parse-curl")
