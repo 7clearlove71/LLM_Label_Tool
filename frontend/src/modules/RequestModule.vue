@@ -341,8 +341,9 @@ async function sendChat(text) {
   const c = activeConversation()
   if (!s || !c || streaming.value) return
   c.messages.push({ role: 'user', content: text, reasoning: '' })
-  const assistant = { role: 'assistant', content: '', reasoning: '' }
-  c.messages.push(assistant)
+  c.messages.push({ role: 'assistant', content: '', reasoning: '' })
+  // 取响应式数组里的元素引用：流式增量改它才能触发逐字渲染
+  const assistant = c.messages[c.messages.length - 1]
   syncMessagesRef()
   streaming.value = true
   chatAbort = new AbortController()
