@@ -85,7 +85,9 @@ merged_body = { ...parse(template.body 去掉 messages),
 
 - 接收装配好的请求 spec（method=POST、url、headers、含 `stream:true` 的 body）。
 - 用 `httpx.stream("POST", ...)` 连接目标 LLM，逐行读上游 SSE 的 `data:` 行。
-- 解析每行 JSON，从 `choices[0].delta` 取 `content` 与 `reasoning_content`。
+- 解析每行 JSON，从 `choices[0].delta` 取 `content` 与 reasoning。
+  - **reasoning 字段兼容**：依次取 `delta.reasoning_content`（DeepSeek/vLLM 等）→ `delta.reasoning`（OpenRouter 等），
+    取到第一个非空即用。两者归一为转发事件里的 `reasoning` 字段。
 - 以 **SSE 事件**重新转发给前端：
   - `event: delta`，data = `{ "content": "...", "reasoning": "..." }`（增量，可只含其一）
   - `event: done`，data = `{}`（上游发 `data: [DONE]` 时）
@@ -105,7 +107,7 @@ merged_body = { ...parse(template.body 去掉 messages),
 ### 测试
 
 `tests/` 新增对「上游 SSE 分片 → 转发事件」转换逻辑的 pytest 单测（仿 `curl_parser` 风格）：
-正常分片、reasoning 与 content 混合、`[DONE]`、坏行跳过、上游错误。
+正常分片、reasoning 与 content 混合、`reasoning_content` 与 `reasoning` 两种字段、`[DONE]`、坏行跳过、上游错误。
 
 ## 5. 前端组件与交互（仿 Claude 网页）
 

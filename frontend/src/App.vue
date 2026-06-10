@@ -49,10 +49,10 @@ const activeModule = ref('viewer')
 }
 
 .nav-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
   color: var(--apple-on-dark);
-  letter-spacing: -0.12px;
+  letter-spacing: -0.2px;
 }
 
 .app-body-shell {
@@ -67,27 +67,29 @@ const activeModule = ref('viewer')
 }
 
 .module-tab {
-  background: none;
-  border: none;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   color: rgba(255, 255, 255, 0.55);
   font-family: var(--font-family);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: -0.12px;
   cursor: pointer;
-  padding: 5px 12px;
+  padding: 5px 14px;
   border-radius: var(--rounded-sm);
   transition: all 0.15s;
 }
 
 .module-tab:hover {
   color: var(--apple-on-dark);
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.32);
 }
 
 .module-tab.active {
   color: var(--apple-on-dark);
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.45);
   font-weight: 600;
 }
 </style>
