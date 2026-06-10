@@ -35,3 +35,8 @@ def test_response_result_error_shape():
 def test_request_spec_rejects_invalid_body_type():
     with pytest.raises(ValidationError):
         RequestSpec(body_type="binary")
+
+
+def test_request_store_active_id_default():
+    store = RequestStore()
+    assert store.active_id is None
