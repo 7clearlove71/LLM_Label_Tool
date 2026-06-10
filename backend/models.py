@@ -63,10 +63,27 @@ class ResponseResult(BaseModel):
     error: Optional[str] = None
 
 
+class Message(BaseModel):
+    role: Literal["system", "user", "assistant"] = "user"
+    content: str = ""
+    reasoning: str = ""
+
+
+class Conversation(BaseModel):
+    id: str
+    name: str = "新对话"
+    messages: list[Message] = []
+    created_at: str = ""
+    updated_at: str = ""
+
+
 class RequestSample(BaseModel):
     id: str
     name: str
     request: RequestSpec
+    mode: Literal["request", "chat"] = "request"
+    conversations: list[Conversation] = []
+    active_conversation_id: Optional[str] = None
 
 
 class RequestStore(BaseModel):
