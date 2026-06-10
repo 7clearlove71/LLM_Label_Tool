@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Literal
 
 class ScanRequest(BaseModel):
     path: str
@@ -33,3 +33,50 @@ class FileSearchRequest(BaseModel):
 class BookmarksData(BaseModel):
     default: Optional[str] = None
     bookmarks: list[str] = []
+
+
+class KeyValueItem(BaseModel):
+    key: str = ""
+    value: str = ""
+    enabled: bool = True
+
+
+class RequestSpec(BaseModel):
+    method: str = "GET"
+    url: str = ""
+    params: list[KeyValueItem] = []
+    headers: list[KeyValueItem] = []
+    body_type: Literal["none", "json", "raw", "form"] = "none"
+    body: str = ""                 # json/raw 文本内容
+    form_body: list[KeyValueItem] = []
+
+
+class ResponseResult(BaseModel):
+    status: Optional[int] = None
+    status_text: str = ""
+    elapsed_ms: float = 0
+    size_bytes: int = 0
+    headers: dict[str, str] = {}
+    content_type: str = ""
+    body: str = ""
+    truncated: bool = False
+    error: Optional[str] = None
+
+
+class RequestSample(BaseModel):
+    id: str
+    name: str
+    request: RequestSpec
+
+
+class RequestStore(BaseModel):
+    samples: list[RequestSample] = []
+    draft: Optional[RequestSpec] = None
+
+
+class CurlText(BaseModel):
+    text: str
+
+
+class CurlResult(BaseModel):
+    curl: str
