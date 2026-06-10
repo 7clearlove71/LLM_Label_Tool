@@ -45,7 +45,7 @@ const props = defineProps({
 const emit = defineEmits(['update:spec', 'send', 'copy-curl'])
 
 const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
-const activeTab = ref('params')
+const activeTab = ref('body')
 
 function update(key, value) {
   emit('update:spec', { ...props.spec, [key]: value })
